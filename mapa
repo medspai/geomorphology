@@ -1,0 +1,4 @@
+geomorphology/
+├── index.html
+├── style.css   (opcional)
+└── script.js   (opcional)

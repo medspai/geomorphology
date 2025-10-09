@@ -22,7 +22,7 @@
 
   <script>
     // Crear el mapa y centrarlo en las coordenadas dadas
-    const map = L.map('map').setView([38.300, -0.41], 13);
+    const map = L.map('map').setView([38.300, 0.41], 13);
 
     // Añadir una capa de mapa base (OpenStreetMap)
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -31,9 +31,9 @@
     }).addTo(map);
 
     // Añadir un marcador en el centro
-    L.marker([38.300, -0.41])
+    L.marker([38.300, 0.41])
       .addTo(map)
-      .bindPopup('Ubicación central<br>Lat: 38.300, Lon: -0.41')
+      .bindPopup('Ubicación central<br>Lat: 38.300, Lon: 0.41')
       .openPopup();
   </script>
 

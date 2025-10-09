@@ -11,8 +11,8 @@
 
   <style>
     #map {
-      height: 90vh; /* Ocupa toda la pantalla */
-      width: 90%;
+      height: 95vh; /* Ocupa toda la pantalla */
+      width: 95%;
     }
   </style>
 </head>
@@ -22,7 +22,7 @@
 
   <script>
     // Crear el mapa y centrarlo en las coordenadas dadas
-    const map = L.map('map').setView([38.300, -0.35], 13);
+    const map = L.map('map').setView([38.300, -0.39], 13);
 
     // Añadir una capa de mapa base (OpenStreetMap)
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -31,9 +31,9 @@
     }).addTo(map);
 
     // Añadir un marcador en el centro
-    L.marker([38.300, -0.35])
+    L.marker([38.300, -0.39])
       .addTo(map)
-      .bindPopup('Ubicación central<br>Lat: 38.300, Lon: -0.35')
+      .bindPopup('Ubicación central<br>Lat: 38.300, Lon: -0.39')
       .openPopup();
   </script>
 

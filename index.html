@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mapa Leaflet Centrado</title>
+  <title>Mapa Leaflet con WMS</title>
 
   <!-- Cargar Leaflet desde CDN -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -11,8 +11,9 @@
 
   <style>
     #map {
-      height: 95vh; /* Ocupa toda la pantalla */
+      height: 95vh;
       width: 95%;
+      margin: auto;
     }
   </style>
 </head>
@@ -21,16 +22,24 @@
   <div id="map"></div>
 
   <script>
-    // Crear el mapa y centrarlo en las coordenadas dadas
+    // Crear el mapa y centrarlo
     const map = L.map('map').setView([38.300, -1.42], 13);
 
-    // Añadir una capa de mapa base (OpenStreetMap)
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    // Capa base: OpenStreetMap
+    const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution: '&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors'
     }).addTo(map);
 
-    // Añadir un marcador en el centro
+    // Capa WMS del IGN (Ortofoto PNOA)
+    const wmsLayer = L.tileLayer.wms("https://www.ign.es/wms-inspire/pnoa-ma?", {
+      layers: "OI.OrthoimageCoverage",
+      format: "image/png",
+      transparent: true,
+      attribution: "PNOA © IGN"
+    }).addTo(map);
+
+    // Marcador central
     L.marker([38.300, -1.42])
       .addTo(map)
       .bindPopup('Ubicación central<br>Lat: 38.300, Lon: -1.42')
@@ -39,3 +48,6 @@
 
 </body>
 </html>
+const baseMaps = { "OpenStreetMap": osm };
+const overlayMaps = { "Ortofoto PNOA (WMS)": wmsLayer };
+L.control.layers(baseMaps, overlayMaps).addTo(map);

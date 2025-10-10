@@ -23,7 +23,7 @@
 
   <script>
     // Crear el mapa y centrarlo
-    const map = L.map('map').setView([38.300, -1.42], 13);
+    const map = L.map('map').setView([38.300, -1.00], 13);
 
     // Capa base: OpenStreetMap
     const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -40,9 +40,9 @@
     }).addTo(map);
 
     // Marcador central
-    L.marker([38.300, -1.42])
+    L.marker([38.300, -1.00])
       .addTo(map)
-      .bindPopup('Ubicación central<br>Lat: 38.300, Lon: -1.42')
+      .bindPopup('Ubicación central<br>Lat: 38.300, Lon: -1.00')
       .openPopup();
   </script>
 
@@ -74,26 +74,12 @@ L.control.layers(baseMaps, overlayMaps).addTo(map);
   <div id="map"></div>
 
   <script>
-    const map = L.map('map').setView([38.300, -1.42], 6);
+    const map = L.map('map').setView([38.300, -1.00], 6);
 
     const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution: '&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors'
     }).addTo(map);
-
-    // Capa WMS de UAM — Relieve peninsular
-    const wmsUAM = L.tileLayer.wms("https://guiadigital.uam.es/geoserver/Relieve_P_IBERICA/wms?", {
-      layers: "relieve_hipso_P_Iberica",    // puedes cambiar por otra capa: pendientes_P_Iberica, sombreado_P_Iberica
-      format: "image/png",
-      transparent: true,
-      attribution: "Relieve UAM (SCUAM)"
-      // Puedes agregar otros parámetros si son necesarios, por ejemplo: version, styles, crs, etc.
-    }).addTo(map);
-
-    // Opcional: control de capas
-    const baseMaps = { "OpenStreetMap": osm };
-    const overlayMaps = { "Relieve UAM": wmsUAM };
-    L.control.layers(baseMaps, overlayMaps).addTo(map);
 
   </script>
 </body>
@@ -123,7 +109,7 @@ L.control.layers(baseMaps, overlayMaps).addTo(map);
 
   <script>
     // Crear mapa
-    const map = L.map('map').setView([38.300, -1.42], 7);
+    const map = L.map('map').setView([38.300, -1.00], 7);
 
     // --- CAPAS BASE ---
     const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -131,6 +117,7 @@ L.control.layers(baseMaps, overlayMaps).addTo(map);
       attribution: '&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a>'
     }).addTo(map);
 
+    // --- CAPAS OVERLAY (WMS UAM) ---
     const pnoa = L.tileLayer.wms("https://www.ign.es/wms-inspire/pnoa-ma?", {
       layers: "OI.OrthoimageCoverage",
       format: "image/png",
@@ -138,38 +125,21 @@ L.control.layers(baseMaps, overlayMaps).addTo(map);
       attribution: "PNOA © IGN"
     });
 
-    // --- CAPAS OVERLAY (WMS UAM) ---
-    const relieveUAM = L.tileLayer.wms("http://guiadigital.uam.es:8080/geoserver/Relieve_P_IBERICA/wms?", {
-      layers: "relieve_hipso_P_Iberica",
-      format: "image/png",
-      transparent: true,
-      attribution: "Relieve UAM (SCUAM)"
-    });
-
-    const pendientesUAM = L.tileLayer.wms("http://guiadigital.uam.es:8080/geoserver/Relieve_P_IBERICA/wms?", {
-      layers: "pendientes_P_Iberica",
-      format: "image/png",
-      transparent: true,
-      attribution: "Relieve UAM (SCUAM)"
-    });
-
     // --- CONTROL DE CAPAS ---
     const baseMaps = {
       "OpenStreetMap": osm,
-      "Ortofoto PNOA (IGN)": pnoa
     };
 
     const overlayMaps = {
-      "Relieve UAM": relieveUAM,
-      "Pendientes UAM": pendientesUAM
-    };
+      "Ortofoto PNOA (IGN)": pnoa
+          };
 
     L.control.layers(baseMaps, overlayMaps, { collapsed: false }).addTo(map);
 
     // --- MARCADOR CENTRAL ---
-    L.marker([38.300, -1.42])
+    L.marker([38.300, -1.00])
       .addTo(map)
-      .bindPopup('Ubicación central<br>Lat: 38.300, Lon: -1.42')
+      .bindPopup('Ubicación central<br>Lat: 38.300, Lon: -1.00')
       .openPopup();
   </script>
 

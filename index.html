@@ -23,7 +23,7 @@
 
   <script>
     // Crear mapa centrado
-    const map = L.map('map').setView([38.300, -1.00], 7);
+    const map = L.map('map').setView([38.225, -0.304], 5);
 
     // --- CAPA BASE ---
     const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -46,9 +46,9 @@
     L.control.layers(baseMaps, overlayMaps, { collapsed: false }).addTo(map);
 
     // --- MARCADOR CENTRAL ---
-    L.marker([38.300, -1.00])
+    L.marker([38.225, -0.304])
       .addTo(map)
-      .bindPopup('Ubicación central<br>Lat: 38.300, Lon: -1.00')
+      .bindPopup('Ubicación central<br>Lat: 38.225, Lon: -0.304')
       .openPopup();
   </script>
 

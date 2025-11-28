@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mapa Leaflet con control de capas</title>
+  <title>Mapa Leaflet con control de capas y leyenda</title>
 
   <!-- Leaflet -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -15,71 +15,17 @@
       width: 95%;
       margin: auto;
     }
-  </style>
-</head>
-<body>
-
-  <div id="map"></div>
-
-  <script>
-    // Crear mapa centrado
-    const map = L.map('map').setView([38.79, -0.40], 10);
-
-    // --- CAPA BASE ---
-    const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '&copy; OpenStreetMap'
-    }).addTo(map);
-
-    // --- CAPA OVERLAY (PNOA WMS) ---
-    const pnoa = L.tileLayer.wms("https://www.ign.es/wms-inspire/pnoa-ma?", {
-      layers: "OI.OrthoimageCoverage",
-      format: "image/png",
-      transparent: true,
-      attribution: "PNOA © IGN"
-    }).addTo(map); // Añadimos al mapa para que esté activa por defecto
-
-    // --- CAPA OVERLAY (SOMBREADO WMS) ---
-    const pnoa = L.tileLayer.wms("https://terramapas.icv.gva.es/mapabase_isohipsas/wms", {
-      layers: "OI.OrthoimageCoverage",
-      format: "image/png",
-      transparent: true,
-      attribution: "SOMBRAS © ICV"
-    }).addTo(map); // Añadimos al mapa para que esté activa por defecto
-
-    // --- CONTROL DE CAPAS ---
-    const baseMaps = { "OpenStreetMap": osm };
-    const overlayMaps = { "Ortofoto PNOA (IGN)": pnoa };
-    const overlayMaps = { "SOMBREADO (ICV)": relleu };
-
-    L.control.layers(baseMaps, overlayMaps, { collapsed: false }).addTo(map);
-
-    // --- MARCADOR CENTRAL ---
-    L.marker([38.79, -0.40])
-      .addTo(map)
-      .bindPopup('Ubicación central<br>Lat: 38.79, Lon: -0.40')
-      .openPopup();
-  </script>
-
-</body>
-</html>
-
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mapa Leaflet con control de capas</title>
-
-  <!-- Leaflet -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-  <style>
-    #map {
-      height: 95vh;
-      width: 95%;
-      margin: auto;
+    /* Estilo de leyenda */
+    .info.legend h4 {
+      margin: 0 0 5px 0;
+      font-size: 14px;
+    }
+    .info.legend i {
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      margin-right: 8px;
+      opacity: 0.7;
     }
   </style>
 </head>
@@ -88,7 +34,7 @@
   <div id="map"></div>
 
   <script>
-    // Crear mapa centrado
+    // --- CREAR MAPA ---
     const map = L.map('map').setView([38.79, -0.40], 10);
 
     // --- CAPA BASE ---
@@ -125,7 +71,6 @@
       }
     });
 
-    // Cargar GeoJSON
     fetch(urlGeojson)
       .then(response => response.json())
       .then(data => {
@@ -133,10 +78,19 @@
         map.fitBounds(capaGeojson.getBounds());
       });
 
+    // --- CAPA WMS SOMBREADO RELIEVE (ICV GVA) ---
+    const sombreadoRelieve = L.tileLayer.wms("https://terramapas.icv.gva.es/mapabase_isohipsas/wms?", {
+      layers: "isohipsas",
+      format: "image/png",
+      transparent: true,
+      attribution: "ICV - Generalitat Valenciana"
+    });
+
     // --- CONTROL DE CAPAS ---
     const baseMaps = { "OpenStreetMap": osm };
     const overlayMaps = { 
       "Ortofoto PNOA (IGN)": pnoa,
+      "Sombreado relieve (ICV)": sombreadoRelieve,
       "Canyades Benferri (GeoJSON)": capaGeojson
     };
 
@@ -146,6 +100,26 @@
     L.marker([38.79, -0.40])
       .addTo(map)
       .bindPopup('Ubicación central<br>Lat: 38.79, Lon: -0.40');
+
+    // --- LEYENDA ---
+    const legend = L.control({ position: "bottomright" });
+
+    legend.onAdd = function(map) {
+      const div = L.DomUtil.create("div", "info legend");
+      div.style.background = "white";
+      div.style.padding = "8px";
+      div.style.border = "1px solid gray";
+      div.style.borderRadius = "5px";
+      div.innerHTML = `
+        <h4>Leyenda</h4>
+        <i style="background: red;"></i> Canyades Benferri (GeoJSON)<br>
+        <i style="background: rgba(0,0,0,0.2);"></i> Sombreado relieve (ICV)<br>
+        <i style="border-top: 2px solid black; display: block; margin-top:4px;"></i> Ortofoto PNOA (IGN)<br>
+      `;
+      return div;
+    };
+
+    legend.addTo(map);
   </script>
 
 </body>

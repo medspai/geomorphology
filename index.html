@@ -39,9 +39,18 @@
       attribution: "PNOA © IGN"
     }).addTo(map); // Añadimos al mapa para que esté activa por defecto
 
+    // --- CAPA OVERLAY (SOMBREADO WMS) ---
+    const pnoa = L.tileLayer.wms("https://terramapas.icv.gva.es/mapabase_isohipsas/wms", {
+      layers: "OI.OrthoimageCoverage",
+      format: "image/png",
+      transparent: true,
+      attribution: "SOMBRAS © ICV"
+    }).addTo(map); // Añadimos al mapa para que esté activa por defecto
+
     // --- CONTROL DE CAPAS ---
     const baseMaps = { "OpenStreetMap": osm };
     const overlayMaps = { "Ortofoto PNOA (IGN)": pnoa };
+    const overlayMaps = { "SOMBREADO (ICV)": relleu };
 
     L.control.layers(baseMaps, overlayMaps, { collapsed: false }).addTo(map);
 

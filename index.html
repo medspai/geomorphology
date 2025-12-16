@@ -30,4 +30,145 @@
 </head>
 
 <body>
-  <div id="map"><
+  <div id="map"></div>
+
+  <script>
+    // =========================
+    // CREAR MAPA
+    // =========================
+    const map = L.map('map').setView([38.79, -0.40], 10);
+
+    // =========================
+    // CAPAS BASE
+    // =========================
+    const ignBase = L.tileLayer.wms("https://www.ign.es/wms-inspire/ign-base?", {
+      layers: "IGNBaseTodo",
+      format: "image/png",
+      transparent: false,
+      attribution: "Base IGN © Instituto Geográfico Nacional"
+    }).addTo(map);
+
+    // =========================
+    // CAPAS OVERLAY WMS
+    // =========================
+    const pnoa = L.tileLayer.wms("https://www.ign.es/wms-inspire/pnoa-ma?", {
+      layers: "OI.OrthoimageCoverage",
+      format: "image/png",
+      transparent: true,
+      attribution: "PNOA © IGN"
+    });
+
+    const sombreadoRelieve = L.tileLayer.wms("https://terramapas.icv.gva.es/mapabase_isohipsas/wms?", {
+      layers: "isohipsas",
+      format: "image/png",
+      transparent: true,
+      attribution: "ICV - Generalitat Valenciana"
+    });
+
+    // =========================
+    // CAPA GEOJSON: CANYADES
+    // =========================
+    const urlCanyades = "https://raw.githubusercontent.com/medspai/geomorphology/main/1canyades_benferri4326.json";
+
+    const capaCanyades = L.geoJSON(null, {
+      style: {
+        color: "red",
+        weight: 2,
+        fillOpacity: 0.3
+      },
+      onEachFeature: function (feature, layer) {
+        if (feature.properties) {
+          let popup = "";
+          for (let key in feature.properties) {
+            popup += `<strong>${key}</strong>: ${feature.properties[key]}<br>`;
+          }
+          layer.bindPopup(popup);
+        }
+      }
+    });
+
+    fetch(urlCanyades)
+      .then(res => res.json())
+      .then(data => {
+        capaCanyades.addData(data);
+        map.fitBounds(capaCanyades.getBounds());
+      })
+      .catch(err => console.error("Error cargando Canyades:", err));
+
+    // =========================
+    // CAPA GEOJSON: GEOMORFOLOGÍA
+    // =========================
+    const urlGeomorfologia = "https://raw.githubusercontent.com/medspai/geomorphology/main/geomorfologia.geojson";
+
+    const capaGeomorfologia = L.geoJSON(null, {
+      style: feature => ({
+        color: "#8B4513",
+        weight: 1.5,
+        fillOpacity: 0.45
+      }),
+      onEachFeature: function (feature, layer) {
+        if (feature.properties) {
+          let popup = "";
+          for (let key in feature.properties) {
+            popup += `<strong>${key}</strong>: ${feature.properties[key]}<br>`;
+          }
+          layer.bindPopup(popup);
+        }
+      }
+    });
+
+    fetch(urlGeomorfologia)
+      .then(res => res.json())
+      .then(data => {
+        capaGeomorfologia.addData(data);
+      })
+      .catch(err => console.error("Error cargando Geomorfología:", err));
+
+    // =========================
+    // CONTROL DE CAPAS
+    // =========================
+    const baseMaps = {
+      "Base IGN": ignBase
+    };
+
+    const overlayMaps = {
+      "Ortofoto PNOA": pnoa,
+      "Sombreado relieve": sombreadoRelieve,
+      "Canyades Benferri": capaCanyades,
+      "Geomorfología": capaGeomorfologia
+    };
+
+    L.control.layers(baseMaps, overlayMaps, { collapsed: false }).addTo(map);
+
+    // =========================
+    // MARCADOR CENTRAL
+    // =========================
+    L.marker([38.79, -0.40])
+      .addTo(map)
+      .bindPopup("Ubicación central");
+
+    // =========================
+    // LEYENDA
+    // =========================
+    const legend = L.control({ position: "bottomright" });
+
+    legend.onAdd = function () {
+      const div = L.DomUtil.create("div", "info legend");
+      div.style.background = "white";
+      div.style.padding = "8px";
+      div.style.border = "1px solid gray";
+      div.style.borderRadius = "5px";
+      div.innerHTML = `
+        <h4>Leyenda</h4>
+        <i style="background:red"></i> Canyades Benferri<br>
+        <i style="background:#8B4513"></i> Geomorfología<br>
+        <i style="background:#999"></i> Sombreado relieve<br>
+        <i style="background:#ccc"></i> Ortofoto PNOA
+      `;
+      return div;
+    };
+
+    legend.addTo(map);
+  </script>
+</body>
+</html>

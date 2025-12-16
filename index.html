@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mapa Leaflet Mejorado</title>
+  <title>Mapa Geomorfología</title>
 
   <!-- Leaflet -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -28,105 +28,6 @@
     }
   </style>
 </head>
+
 <body>
-
-  <div id="map"></div>
-
-  <script>
-    // --- CREAR MAPA ---
-    const map = L.map('map').setView([38.79, -0.40], 10);
-
-    // --- NUEVA CAPA BASE WMS IGN-BASE ---
-    const ignBase = L.tileLayer.wms("https://www.ign.es/wms-inspire/ign-base?", {
-      layers: "IGNBaseTodo",
-      format: "image/png",
-      transparent: false,
-      attribution: "Base IGN © Instituto Geográfico Nacional"
-    }).addTo(map);
-
-    // --- CAPA OVERLAY (PNOA WMS) ---
-    const pnoa = L.tileLayer.wms("https://www.ign.es/wms-inspire/pnoa-ma?", {
-      layers: "OI.OrthoimageCoverage",
-      format: "image/png",
-      transparent: true,
-      attribution: "PNOA © IGN"
-    });
-
-    // --- CAPA GEOJSON DESDE GITHUB ---
-    const urlGeojson = "https://raw.githubusercontent.com/medspai/geomorphology/refs/heads/main/1canyades_benferri4326.json";
-
-    let capaGeojson = L.geoJSON(null, {
-      style: feature => ({
-        color: "red",
-        weight: 2,
-        fillOpacity: 0.3
-      }),
-      onEachFeature: function (feature, layer) {
-        if (feature.properties) {
-          let popupContent = "";
-          for (let key in feature.properties) {
-            popupContent += `<strong>${key}</strong>: ${feature.properties[key]}<br>`;
-          }
-          layer.bindPopup(popupContent);
-        }
-      }
-    });
-
-    fetch(urlGeojson)
-      .then(response => response.json())
-      .then(data => {
-        capaGeojson.addData(data);
-        map.fitBounds(capaGeojson.getBounds());
-      })
-      .catch(err => console.error("Error al cargar el GeoJSON:", err));
-
-    // --- CAPA WMS SOMBREADO RELIEVE (ICV) ---
-    const sombreadoRelieve = L.tileLayer.wms("https://terramapas.icv.gva.es/mapabase_isohipsas/wms?", {
-      layers: "isohipsas",
-      format: "image/png",
-      transparent: true,
-      attribution: "ICV - Generalitat Valenciana"
-    });
-
-    // --- CONTROL DE CAPAS ---
-    const baseMaps = { 
-      "Base IGN (WMS)": ignBase 
-    };
-
-    const overlayMaps = { 
-      "Ortofoto PNOA (IGN)": pnoa,
-      "Sombreado relieve (ICV)": sombreadoRelieve,
-      "Canyades Benferri (GeoJSON)": capaGeojson
-    };
-
-    L.control.layers(baseMaps, overlayMaps, { collapsed: false }).addTo(map);
-
-    // --- MARCADOR CENTRAL ---
-    L.marker([38.79, -0.40])
-      .addTo(map)
-      .bindPopup('Ubicación central<br>Lat: 38.79, Lon: -0.40');
-
-    // --- LEYENDA ---
-    const legend = L.control({ position: "bottomright" });
-
-    legend.onAdd = function(map) {
-      const div = L.DomUtil.create("div", "info legend");
-      div.style.background = "white";
-      div.style.padding = "8px";
-      div.style.border = "1px solid gray";
-      div.style.borderRadius = "5px";
-      div.innerHTML = `
-        <h4>Leyenda</h4>
-        <i style="background:red;"></i> Canyades Benferri<br>
-        <i style="background:#999;"></i> Sombreado relieve (ICV)<br>
-        <i style="background:#ccc;"></i> Ortofoto PNOA (IGN)<br>
-      `;
-      return div;
-    };
-
-    legend.addTo(map);
-  </script>
-
-</body>
-</html>
-
+  <div id="map"><

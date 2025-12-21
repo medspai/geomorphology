@@ -2,8 +2,8 @@
 <html lang="es">
 <head>
   <meta charset="utf-8" />
+  <title>Mapa Geomorfología Optimizado</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mapa Geomorfología</title>
 
   <!-- Leaflet -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -12,17 +12,19 @@
   <style>
     #map {
       height: 95vh;
-      width: 95%;
+      width: 98%;
       margin: auto;
     }
-    .info.legend h4 {
-      margin: 0 0 5px 0;
-      font-size: 14px;
+    .info {
+      background: white;
+      padding: 8px;
+      font-size: 13px;
+      border-radius: 4px;
     }
-    .info.legend i {
-      display: inline-block;
+    .legend i {
       width: 18px;
       height: 18px;
+      float: left;
       margin-right: 8px;
       opacity: 0.7;
     }
@@ -30,145 +32,151 @@
 </head>
 
 <body>
-  <div id="map"></div>
+<div id="map"></div>
 
-  <script>
-    // =========================
-    // CREAR MAPA
-    // =========================
-    const map = L.map('map').setView([38.79, -0.40], 10);
+<script>
+/* ======================================================
+   MAPA
+====================================================== */
+const map = L.map("map", {
+  preferCanvas: true
+}).setView([38.79, -0.40], 10);
 
-    // =========================
-    // CAPAS BASE
-    // =========================
-    const ignBase = L.tileLayer.wms("https://www.ign.es/wms-inspire/ign-base?", {
-      layers: "IGNBaseTodo",
-      format: "image/png",
-      transparent: false,
-      attribution: "Base IGN © Instituto Geográfico Nacional"
-    }).addTo(map);
+/* ======================================================
+   CAPA BASE WMTS IGN (rápida)
+====================================================== */
+const ignWMTS = L.tileLayer(
+  "https://www.ign.es/wmts/ign-base?layer=IGNBaseTodo&style=default&tilematrixset=GoogleMapsCompatible&Service=WMTS&Request=GetTile&Version=1.0.0&Format=image/png&TileMatrix={z}&TileRow={y}&TileCol={x}",
+  {
+    attribution: "© Instituto Geográfico Nacional"
+  }
+).addTo(map);
 
-    // =========================
-    // CAPAS OVERLAY WMS
-    // =========================
-    const pnoa = L.tileLayer.wms("https://www.ign.es/wms-inspire/pnoa-ma?", {
-      layers: "OI.OrthoimageCoverage",
-      format: "image/png",
-      transparent: true,
-      attribution: "PNOA © IGN"
-    });
+/* ======================================================
+   PANEL PARA GEOJSON (mejor rendimiento)
+====================================================== */
+map.createPane("geojsonPane");
+map.getPane("geojsonPane").style.zIndex = 450;
 
-    const sombreadoRelieve = L.tileLayer.wms("https://terramapas.icv.gva.es/mapabase_isohipsas/?", {
-      layers: "isohipsas",
-      format: "image/png",
-      transparent: true,
-      attribution: "ICV - Generalitat Valenciana"
-    });
+/* ======================================================
+   SIMBOLOGÍA POR ATRIBUTOS
+====================================================== */
+function colorGeomorfologia(tipo) {
+  switch (tipo) {
+    case "Ladera": return "#a6611a";
+    case "Barranco": return "#018571";
+    case "Terraza": return "#dfc27d";
+    case "Abanico": return "#80cdc1";
+    default: return "#999999";
+  }
+}
 
-    // =========================
-    // CAPA GEOJSON: CANYADES
-    // =========================
-    const urlCanyades = "https://raw.githubusercontent.com/medspai/geomorphology/main/1canyades_benferri4326.json";
+function estiloGeomorfologia(feature) {
+  return {
+    pane: "geojsonPane",
+    color: "#444",
+    weight: 1,
+    fillColor: colorGeomorfologia(feature.properties.TIPO),
+    fillOpacity: 0.6
+  };
+}
 
-    const capaCanyades = L.geoJSON(null, {
-      style: {
-        color: "red",
-        weight: 2,
-        fillOpacity: 0.3
-      },
-      onEachFeature: function (feature, layer) {
-        if (feature.properties) {
-          let popup = "";
-          for (let key in feature.properties) {
-            popup += `<strong>${key}</strong>: ${feature.properties[key]}<br>`;
-          }
-          layer.bindPopup(popup);
-        }
-      }
-    });
+/* ======================================================
+   GEOJSON – CANYADES
+====================================================== */
+const capaCanyades = L.geoJSON(null, {
+  pane: "geojsonPane",
+  style: {
+    color: "red",
+    weight: 2
+  },
+  onEachFeature: (feature, layer) => {
+    layer.bindPopup(
+      `<b>${feature.properties.NOMBRE || "Canyada"}</b>`
+    );
+  }
+}).addTo(map);
 
-    fetch(urlCanyades)
-      .then(res => res.json())
-      .then(data => {
-        capaCanyades.addData(data);
-        map.fitBounds(capaCanyades.getBounds());
-      })
-      .catch(err => console.error("Error cargando Canyades:", err));
+fetch("https://raw.githubusercontent.com/medspai/geomorphology/main/1canyades_benferri4326.json")
+  .then(r => r.json())
+  .then(data => {
+    capaCanyades.addData(data);
+    map.fitBounds(capaCanyades.getBounds());
+  });
 
-    // =========================
-    // CAPA GEOJSON: GEOMORFOLOGÍA
-    // =========================
-    const urlGeomorfologia = "https://raw.githubusercontent.com/medspai/geomorphology/main/geomorfologia.wgs84.geojson";
+/* ======================================================
+   GEOJSON – GEOMORFOLOGÍA
+====================================================== */
+const capaGeomorfologia = L.geoJSON(null, {
+  style: estiloGeomorfologia,
+  onEachFeature: (feature, layer) => {
+    let html = "<b>Geomorfología</b><br>";
+    for (let k in feature.properties) {
+      html += `<b>${k}:</b> ${feature.properties[k]}<br>`;
+    }
+    layer.bindPopup(html);
+  }
+}).addTo(map);
 
-    const capaGeomorfologia = L.geoJSON(null, {
-      style: feature => ({
-        color: "#8B4513",
-        weight: 1.5,
-        fillOpacity: 0.45
-      }),
-      onEachFeature: function (feature, layer) {
-        if (feature.properties) {
-          let popup = "";
-          for (let key in feature.properties) {
-            popup += `<strong>${key}</strong>: ${feature.properties[key]}<br>`;
-          }
-          layer.bindPopup(popup);
-        }
-      }
-    });
+fetch("https://raw.githubusercontent.com/medspai/geomorphology/main/geomorfologia.wgs84.geojson")
+  .then(r => r.json())
+  .then(data => capaGeomorfologia.addData(data));
 
-    fetch(urlGeomorfologia)
-      .then(res => res.json())
-      .then(data => {
-        capaGeomorfologia.addData(data);
-      })
-      .catch(err => console.error("Error cargando Geomorfología:", err));
+/* ======================================================
+   CONTROL DE CAPAS
+====================================================== */
+L.control.layers(
+  { "IGN Base (WMTS)": ignWMTS },
+  {
+    "Canyades": capaCanyades,
+    "Geomorfología": capaGeomorfologia
+  },
+  { collapsed: false }
+).addTo(map);
 
-    // =========================
-    // CONTROL DE CAPAS
-    // =========================
-    const baseMaps = {
-      "Base IGN": ignBase
-    };
+/* ======================================================
+   ESCALA
+====================================================== */
+L.control.scale({
+  position: "bottomleft",
+  metric: true,
+  imperial: false
+}).addTo(map);
 
-    const overlayMaps = {
-      "Ortofoto PNOA": pnoa,
-      "Sombreado relieve": sombreadoRelieve,
-      "Canyades Benferri": capaCanyades,
-      "Geomorfología": capaGeomorfologia
-    };
+/* ======================================================
+   COORDENADAS EN TIEMPO REAL
+====================================================== */
+const coords = L.control({ position: "bottomright" });
+coords.onAdd = function () {
+  this.div = L.DomUtil.create("div", "info");
+  this.update();
+  return this.div;
+};
+coords.update = function (latlng) {
+  this.div.innerHTML = latlng
+    ? `Lat: ${latlng.lat.toFixed(5)}<br>Lng: ${latlng.lng.toFixed(5)}`
+    : "Mueve el cursor";
+};
+coords.addTo(map);
 
-    L.control.layers(baseMaps, overlayMaps, { collapsed: false }).addTo(map);
+map.on("mousemove", e => coords.update(e.latlng));
 
-    // =========================
-    // MARCADOR CENTRAL
-    // =========================
-    L.marker([38.79, -0.40])
-      .addTo(map)
-      .bindPopup("Ubicación central");
-
-    // =========================
-    // LEYENDA
-    // =========================
-    const legend = L.control({ position: "bottomright" });
-
-    legend.onAdd = function () {
-      const div = L.DomUtil.create("div", "info legend");
-      div.style.background = "white";
-      div.style.padding = "8px";
-      div.style.border = "1px solid gray";
-      div.style.borderRadius = "5px";
-      div.innerHTML = `
-        <h4>Leyenda</h4>
-        <i style="background:red"></i> Canyades Benferri<br>
-        <i style="background:#8B4513"></i> Geomorfología<br>
-        <i style="background:#999"></i> Sombreado relieve<br>
-        <i style="background:#ccc"></i> Ortofoto PNOA
-      `;
-      return div;
-    };
-
-    legend.addTo(map);
-  </script>
+/* ======================================================
+   LEYENDA
+====================================================== */
+const legend = L.control({ position: "topright" });
+legend.onAdd = function () {
+  const div = L.DomUtil.create("div", "info legend");
+  div.innerHTML = `
+    <b>Geomorfología</b><br>
+    <i style="background:#a6611a"></i>Ladera<br>
+    <i style="background:#018571"></i>Barranco<br>
+    <i style="background:#dfc27d"></i>Terraza<br>
+    <i style="background:#80cdc1"></i>Abanico
+  `;
+  return div;
+};
+legend.addTo(map);
+</script>
 </body>
 </html>

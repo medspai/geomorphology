@@ -212,7 +212,7 @@ function actualizarCapaGeomorfologia() {
 }
 
 /* ======================================================
-   CONTROL DE ESCALA - Ocultar a escala > 1:50.000
+   CONTROL DE ESCALA - Ocultar a escala < 1:50.000
 ====================================================== */
 let capaVisible = true;
 
@@ -223,7 +223,7 @@ function verificarEscala() {
   const warningDiv = document.querySelector('.scale-warning');
   
   if (zoom < 13) {
-    // Escala muy grande (> 1:50.000), ocultar capa
+    // Escala muy pequeña (< 1:50.000), ocultar capa
     if (capaVisible) {
       map.removeLayer(capaGeomorfologia);
       capaVisible = false;
@@ -285,7 +285,7 @@ filtrosControl.onAdd = function () {
       </label>
     </div>
     <div class="scale-warning">
-      ⚠️ Acércate más para ver la capa (zoom > 13)
+      ⚠️ Acércate más para ver la capa (zoom < 13)
     </div>
   `;
   
@@ -296,31 +296,6 @@ filtrosControl.onAdd = function () {
 };
 
 filtrosControl.addTo(map);
-
-/* ======================================================
-   EVENT LISTENERS PARA CHECKBOXES
-====================================================== */
-setTimeout(() => {
-  document.getElementById('filtro-ladera').addEventListener('change', (e) => {
-    filtrosActivos["Ladera"] = e.target.checked;
-    actualizarCapaGeomorfologia();
-  });
-  
-  document.getElementById('filtro-barranco').addEventListener('change', (e) => {
-    filtrosActivos["Barranco"] = e.target.checked;
-    actualizarCapaGeomorfologia();
-  });
-  
-  document.getElementById('filtro-terraza').addEventListener('change', (e) => {
-    filtrosActivos["Terraza"] = e.target.checked;
-    actualizarCapaGeomorfologia();
-  });
-  
-  document.getElementById('filtro-abanico').addEventListener('change', (e) => {
-    filtrosActivos["Abanico"] = e.target.checked;
-    actualizarCapaGeomorfologia();
-  });
-}, 500);
 
 /* ======================================================
    CONTROL DE CAPAS

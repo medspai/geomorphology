@@ -30,7 +30,6 @@
       margin-right: 8px;
       opacity: 0.7;
     }
-
   </style>
 </head>
 
@@ -80,8 +79,6 @@ const wmsIsohipsas = L.tileLayer.wms(
 map.createPane("geojsonPane");
 map.getPane("geojsonPane").style.zIndex = 450;
 
-
-
 /* ======================================================
    SIMBOLOGÍA POR ATRIBUTOS
 ====================================================== */
@@ -104,8 +101,6 @@ function estiloGeomorfologia(feature) {
     fillOpacity: 0.6
   };
 }
-
-
 
 /* ======================================================
    GEOJSON – CANYADES
@@ -137,7 +132,7 @@ fetch("https://raw.githubusercontent.com/medspai/geomorphology/main/1canyades_be
 /* ======================================================
    GEOJSON – GEOMORFOLOGÍA
 ====================================================== */
-let datosGeomorfologia = null; // Guardamos los datos originales
+let datosGeomorfologia = null;
 
 const capaGeomorfologia = L.geoJSON(null, {
   style: estiloGeomorfologia,
@@ -161,35 +156,33 @@ fetch("https://raw.githubusercontent.com/medspai/geomorphology/main/geomorfologi
     alert("No se pudo cargar la capa de geomorfología");
   });
 
-
-
 /* ======================================================
-   CONTROL DE ESCALA - Ocultar cuando zoom >= 13
+   CONTROL DE ESCALA - Ocultar geomorfología cuando zoom >= 13
 ====================================================== */
-let capaVisible = true;
+let capaGeomorfologiaVisible = true;
 
-function verificarEscala() {
+function verificarEscalaGeomorfologia() {
   const zoom = map.getZoom();
-  // Zoom 13 en adelante: demasiado cerca, ocultar capa
-  // Zoom < 13: vista general adecuada, mostrar capa
   
   if (zoom >= 13) {
-    // Zoom muy cercano (>= 13), ocultar capa
-    if (capaVisible) {
+    // Zoom cercano (>= 13), ocultar capa geomorfología
+    if (capaGeomorfologiaVisible && map.hasLayer(capaGeomorfologia)) {
       map.removeLayer(capaGeomorfologia);
-      capaVisible = false;
+      capaGeomorfologiaVisible = false;
+      console.log("Geomorfología oculta - zoom >= 13");
     }
   } else {
-    // Zoom adecuado (< 13), mostrar capa
-    if (!capaVisible) {
+    // Zoom alejado (< 13), mostrar capa geomorfología
+    if (!capaGeomorfologiaVisible) {
       map.addLayer(capaGeomorfologia);
-      capaVisible = true;
+      capaGeomorfologiaVisible = true;
+      console.log("Geomorfología visible - zoom < 13");
     }
   }
 }
 
-map.on('zoomend', verificarEscala);
-verificarEscala(); // Verificar al cargar
+map.on('zoomend', verificarEscalaGeomorfologia);
+verificarEscalaGeomorfologia(); // Verificar al cargar
 
 /* ======================================================
    CONTROL DE CAPAS

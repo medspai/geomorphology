@@ -66,12 +66,19 @@ const ignWMTS = L.tileLayer(
 const wmsIsohipsas = L.tileLayer.wms(
   "https://terramapas.icv.gva.es/mapabase_isohipsas/wms",
   {
-    layers: "isohipsas",
+    layers: "Isohipsas",
     format: "image/png",
     transparent: true,
+    crs: L.CRS.EPSG3857,
     attribution: "© Institut Cartogràfic Valencià"
   }
 );
+
+// Añadir evento de error para debugging
+wmsIsohipsas.on('tileerror', function(error, tile) {
+  console.error('Error cargando tile WMS:', error);
+  console.log('URL del tile:', tile.src);
+});
 
 /* ======================================================
    PANEL PARA GEOJSON (mejor rendimiento)

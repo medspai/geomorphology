@@ -7,13 +7,15 @@
 
   <!-- Leaflet -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <style>
+    body {
+      margin: 0;
+      padding: 0;
+    }
     #map {
-      height: 95vh;
-      width: 98%;
-      margin: auto;
+      height: 100vh;
+      width: 100%;
     }
     .info {
       background: white;
@@ -28,60 +30,20 @@
       margin-right: 8px;
       opacity: 0.7;
     }
-    /* Estilos para el panel de filtros */
-    .filter-panel {
-      background: white;
-      padding: 12px;
-      border-radius: 4px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-      max-width: 200px;
-    }
-    .filter-panel h4 {
-      margin: 0 0 10px 0;
-      font-size: 14px;
-      font-weight: bold;
-      border-bottom: 2px solid #ddd;
-      padding-bottom: 5px;
-    }
-    .filter-item {
-      margin: 6px 0;
-      display: flex;
-      align-items: center;
-    }
-    .filter-item input {
-      margin-right: 6px;
-      cursor: pointer;
-    }
-    .filter-item label {
-      cursor: pointer;
-      font-size: 13px;
-      display: flex;
-      align-items: center;
-    }
-    .color-indicator {
-      width: 16px;
-      height: 16px;
-      display: inline-block;
-      margin-left: 6px;
-      border: 1px solid #333;
-      border-radius: 2px;
-    }
-    .scale-warning {
-      background: #fff3cd;
-      border: 1px solid #ffc107;
-      padding: 8px;
-      border-radius: 4px;
-      font-size: 12px;
-      margin-top: 10px;
-      display: none;
-    }
+
   </style>
 </head>
 
 <body>
 <div id="map"></div>
 
+<!-- Cargar Leaflet ANTES del script -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
 <script>
+// Esperar a que el DOM y Leaflet estén listos
+document.addEventListener('DOMContentLoaded', function() {
+
 /* ======================================================
    MAPA
 ====================================================== */
@@ -100,20 +62,25 @@ const ignWMTS = L.tileLayer(
 ).addTo(map);
 
 /* ======================================================
+   CAPA WMS - ISOHIPSAS ICV
+====================================================== */
+const wmsIsohipsas = L.tileLayer.wms(
+  "https://terramapas.icv.gva.es/mapabase_isohipsas/wms",
+  {
+    layers: "isohipsas",
+    format: "image/png",
+    transparent: true,
+    attribution: "© Institut Cartogràfic Valencià"
+  }
+);
+
+/* ======================================================
    PANEL PARA GEOJSON (mejor rendimiento)
 ====================================================== */
 map.createPane("geojsonPane");
 map.getPane("geojsonPane").style.zIndex = 450;
 
-/* ======================================================
-   ESTADO DE FILTROS
-====================================================== */
-const filtrosActivos = {
-  "Ladera": true,
-  "Barranco": true,
-  "Terraza": true,
-  "Abanico": true
-};
+
 
 /* ======================================================
    SIMBOLOGÍA POR ATRIBUTOS
@@ -138,13 +105,7 @@ function estiloGeomorfologia(feature) {
   };
 }
 
-/* ======================================================
-   FUNCIÓN DE FILTRADO
-====================================================== */
-function filtrarPorTipo(feature) {
-  const tipo = feature.properties?.TIPO || "Desconocido";
-  return filtrosActivos[tipo] !== false;
-}
+
 
 /* ======================================================
    GEOJSON – CANYADES
@@ -180,7 +141,6 @@ let datosGeomorfologia = null; // Guardamos los datos originales
 
 const capaGeomorfologia = L.geoJSON(null, {
   style: estiloGeomorfologia,
-  filter: filtrarPorTipo,
   onEachFeature: (feature, layer) => {
     let html = "<b>Geomorfología</b><br>";
     for (let k in feature.properties) {
@@ -201,44 +161,29 @@ fetch("https://raw.githubusercontent.com/medspai/geomorphology/main/geomorfologi
     alert("No se pudo cargar la capa de geomorfología");
   });
 
-/* ======================================================
-   FUNCIÓN PARA ACTUALIZAR CAPA CON FILTROS
-====================================================== */
-function actualizarCapaGeomorfologia() {
-  capaGeomorfologia.clearLayers();
-  if (datosGeomorfologia) {
-    capaGeomorfologia.addData(datosGeomorfologia);
-  }
-}
+
 
 /* ======================================================
-   CONTROL DE ESCALA - Ocultar a escala < 1:50.000
+   CONTROL DE ESCALA - Ocultar cuando zoom >= 13
 ====================================================== */
 let capaVisible = true;
 
 function verificarEscala() {
   const zoom = map.getZoom();
-  // Zoom 13 aproximadamente corresponde a 1:50.000
-  // A menor zoom (más alejado), mayor escala
-  const warningDiv = document.querySelector('.scale-warning');
+  // Zoom 13 en adelante: demasiado cerca, ocultar capa
+  // Zoom < 13: vista general adecuada, mostrar capa
   
-  if (zoom < 13) {
-    // Escala muy pequeña (< 1:50.000), ocultar capa
+  if (zoom >= 13) {
+    // Zoom muy cercano (>= 13), ocultar capa
     if (capaVisible) {
       map.removeLayer(capaGeomorfologia);
       capaVisible = false;
-      if (warningDiv) {
-        warningDiv.style.display = 'block';
-      }
     }
   } else {
-    // Escala adecuada, mostrar capa
+    // Zoom adecuado (< 13), mostrar capa
     if (!capaVisible) {
       map.addLayer(capaGeomorfologia);
       capaVisible = true;
-      if (warningDiv) {
-        warningDiv.style.display = 'none';
-      }
     }
   }
 }
@@ -247,62 +192,12 @@ map.on('zoomend', verificarEscala);
 verificarEscala(); // Verificar al cargar
 
 /* ======================================================
-   PANEL DE FILTROS
-====================================================== */
-const filtrosControl = L.control({ position: "topleft" });
-
-filtrosControl.onAdd = function () {
-  const div = L.DomUtil.create("div", "filter-panel");
-  
-  div.innerHTML = `
-    <h4>🔍 Filtros Geomorfología</h4>
-    <div class="filter-item">
-      <input type="checkbox" id="filtro-ladera" checked>
-      <label for="filtro-ladera">
-        Ladera
-        <span class="color-indicator" style="background:#a6611a"></span>
-      </label>
-    </div>
-    <div class="filter-item">
-      <input type="checkbox" id="filtro-barranco" checked>
-      <label for="filtro-barranco">
-        Barranco
-        <span class="color-indicator" style="background:#018571"></span>
-      </label>
-    </div>
-    <div class="filter-item">
-      <input type="checkbox" id="filtro-terraza" checked>
-      <label for="filtro-terraza">
-        Terraza
-        <span class="color-indicator" style="background:#dfc27d"></span>
-      </label>
-    </div>
-    <div class="filter-item">
-      <input type="checkbox" id="filtro-abanico" checked>
-      <label for="filtro-abanico">
-        Abanico
-        <span class="color-indicator" style="background:#80cdc1"></span>
-      </label>
-    </div>
-    <div class="scale-warning">
-      ⚠️ Acércate más para ver la capa (zoom < 13)
-    </div>
-  `;
-  
-  // Prevenir que los clicks en el panel afecten al mapa
-  L.DomEvent.disableClickPropagation(div);
-  
-  return div;
-};
-
-filtrosControl.addTo(map);
-
-/* ======================================================
    CONTROL DE CAPAS
 ====================================================== */
 L.control.layers(
   { "IGN Base (WMTS)": ignWMTS },
   {
+    "Isohipsas ICV": wmsIsohipsas,
     "Canyades": capaCanyades,
     "Geomorfología": capaGeomorfologia
   },
@@ -352,6 +247,8 @@ legend.onAdd = function () {
   return div;
 };
 legend.addTo(map);
+
+}); // Fin del DOMContentLoaded
 </script>
 </body>
 </html>
